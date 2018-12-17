@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Management.Automation;
 using System.Net.Mail;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.PowerShell.Commands
 {
@@ -203,9 +204,9 @@ namespace Microsoft.PowerShell.Commands
         #region Overrides
 
         /// <summary>
-        /// BeginProcessing override.
+        /// ProcessRecord override.
         /// </summary>
-        protected override void BeginProcessing()
+        protected override void ProcessRecord()
         {
             try
             {
@@ -290,15 +291,10 @@ namespace Microsoft.PowerShell.Commands
             {
                 _mSmtpClient.UseDefaultCredentials = true;
             }
-        }
 
-        /// <summary>
-        /// ProcessRecord override.
-        /// </summary>
-        protected override void ProcessRecord()
-        {
             // Add the attachments
-            if (Attachments != null)
+            Regex regex = new Regex("^@{(; )*.+}$");
+            if (Attachments != null && !regex.IsMatch(Attachments[0]))
             {
                 string filepath = string.Empty;
                 foreach (string attachFile in Attachments)
@@ -317,13 +313,7 @@ namespace Microsoft.PowerShell.Commands
                     _mMailMessage.Attachments.Add(mailAttachment);
                 }
             }
-        }
 
-        /// <summary>
-        /// EndProcessing override.
-        /// </summary>
-        protected override void EndProcessing()
-        {
             try
             {
                 // Send the mail message
